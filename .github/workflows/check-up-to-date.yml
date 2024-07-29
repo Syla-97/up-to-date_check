@@ -26,8 +26,9 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git fetch origin ${{ github.head_ref }}
-          if git merge-base --is-ancestor origin/${{ github.event.pull_request.base.ref }} origin/${{ github.head_ref }}; then
-            echo "Branch is up to date."
+          BEHIND_COMMITS=$(git rev-list --count origin/${{ github.event.pull_request.base.ref }}..origin/${{ github.head_ref }})
+          if [ $BEHIND_COMMITS -gt 0 ]; then
+            echo "Your branch is behind ${{ github.event.pull_request.base.ref }} by $BEHIND_COMMITS commit(s). Please rebase or merge latest changes." && exit 1
           else
-            echo "Your branch is behind ${{ github.event.pull_request.base.ref }}. Please rebase or merge latest changes." && exit 1
+            echo "Branch is up to date."
           fi
