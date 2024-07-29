@@ -1,0 +1,33 @@
+name: Check if branch is up-to-date
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-up-to-date:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Checkout pull request branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          path: pull_request_branch
+          fetch-depth: 0
+
+      - name: Check if pull request branch is up-to-date with base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git fetch origin ${{ github.head_ref }}
+          if git merge-base --is-ancestor origin/${{ github.event.pull_request.base.ref }} origin/${{ github.head_ref }}; then
+            echo "Branch is up to date."
+          else
+            echo "Your branch is behind ${{ github.event.pull_request.base.ref }}. Please rebase or merge latest changes." && exit 1
+          fi
